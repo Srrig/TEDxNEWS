@@ -115,6 +115,9 @@ filtered_df = main_df.filter(
 # Remove duplicates if any
 filtered_df = filtered_df.dropDuplicates()
 
+# Remove duplicates based on video_id
+filtered_df = filtered_df.dropDuplicates(["video_id"])
+
 # Print schema to verify
 filtered_df.printSchema()
 
