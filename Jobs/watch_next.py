@@ -43,8 +43,6 @@ details_df = spark.read \
     .select(col("id").alias("detail_id"),
             col("description"),
             col("duration"),
-            col("socialDescription"),
-            col("presenterDisplayName"),
             col("publishedAt"))
 
 # Read images.csv
@@ -112,13 +110,13 @@ filtered_df = main_df.filter(
     )
 )
 
-# Remove duplicates if any
+# Remove duplicates
 filtered_df = filtered_df.dropDuplicates()
 
 # Remove duplicates based on video_id
 filtered_df = filtered_df.dropDuplicates(["video_id"])
 
-# Print schema to verify
+# Print schema
 filtered_df.printSchema()
 
 # Write to MongoDB
