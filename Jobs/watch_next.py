@@ -62,9 +62,8 @@ related_videos_df = spark.read \
     .option("quote", "\"") \
     .option("escape", "\"") \
     .csv(related_videos_path) \
-    .select(col("id").alias("related_id"),
-            col("related_id").alias("related_video_id"),
-            col("title").alias("related_video_title"))
+    .select(col("id").alias("video_id"),  # ID del video
+            col("related_id"))
 
 # Read tags.csv
 tags_path = "s3://tedx-2024-data-ruggeri/tags.csv"
@@ -89,13 +88,14 @@ tags_agg = tags_df.groupBy(col("tag_id")).agg(collect_list("tag").alias("tags"))
 main_df = main_df.join(tags_agg, main_df.video_id == tags_agg.tag_id, "left") \
     .drop("tag_id")
 
-# Join with related videos
+# Preparare l'aggregato per trovare tutti i video_id associati a ciascun related_id
 related_videos_agg = related_videos_df.groupBy(col("related_id")).agg(
-    collect_list("related_video_id").alias("related_videos_id_list"),
-    collect_list("related_video_title").alias("title_related_videos_list")
+    collect_list("video_id").alias("related_videos_id_list")
 )
-main_df = main_df.join(related_videos_agg, main_df.video_id == related_videos_agg.related_id, "left") \
-    .drop("related_id")
+
+# Unione con main_df sulla base di video_id per trovare i video correlati
+main_df = main_df.join(related_videos_df, "video_id", "left") \
+                 .join(related_videos_agg, "related_id", "left").drop("related_id")
 
 #### FILTER DATA BASED ON TAGS
 
@@ -110,13 +110,10 @@ filtered_df = main_df.filter(
     )
 )
 
-# Remove duplicates
+# Remove duplicates if any
 filtered_df = filtered_df.dropDuplicates()
 
-# Remove duplicates based on video_id
-filtered_df = filtered_df.dropDuplicates(["video_id"])
-
-# Print schema
+# Print schema to verify
 filtered_df.printSchema()
 
 # Write to MongoDB
