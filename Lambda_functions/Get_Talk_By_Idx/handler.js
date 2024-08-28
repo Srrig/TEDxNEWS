@@ -15,12 +15,17 @@ const tagValueMapping = {
 module.exports.get_talk_by_id = async (event, context, callback) => {
     context.callbackWaitsForEmptyEventLoop = false;
 
-    let body = {};
-    if (event.body) {
-        body = JSON.parse(event.body);
-    }
+    // Log dell'evento ricevuto
+    console.log("Received event:", event);
+
+    // Verifica se l'evento contiene `body` o se `idx` è direttamente nell'evento
+    let body = event.body ? JSON.parse(event.body) : event;
+
+    // Log del body parsato
+    console.log("Parsed body:", body);
 
     if (!body.idx) {
+        console.error("idx è nullo o non definito. Body ricevuto:", body);
         return callback(null, {
             statusCode: 500,
             headers: { 'Content-Type': 'text/plain' },
@@ -82,18 +87,18 @@ module.exports.get_talk_by_id = async (event, context, callback) => {
                         relatedVideoTagsData.tags.forEach(tag => {
                             if (tagValueMapping.hasOwnProperty(tag)) {
                                 relatedVideoCount += tagValueMapping[tag];
-            }
-        });
-    }
+                            }
+                        });
+                    }
 
-    return {
-        _id: video._id,
-        title: video.title,
-        url: video.url,
-        image_url: video.image_url,
-        next_video_count: relatedVideoCount // Include il valore next_video_count
-    };
-}));
+                    return {
+                        _id: video._id,
+                        title: video.title,
+                        url: video.url,
+                        image_url: video.image_url,
+                        next_video_count: relatedVideoCount // Include il valore next_video_count
+                    };
+                }));
 
                 
                 // Ordina i video correlati in modo decrescente per next_video_count
